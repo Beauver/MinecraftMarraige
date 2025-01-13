@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "marraigemod",
+  "version": "${version}",
+  "name": "MarraigeMod",
+  "description": "Mairrage mod thingy",
+  "authors": [],
+  "contact": {},
+  "license": "All-Rights-Reserved",
+  "icon": "assets/marraigemod/icon.png",
+  "environment": "server",
+  "entrypoints": {
+    "main": [
+      "com.beauver.minecraft.mods.marraigemod.MarriageMod"
+    ]
+  },
+  "mixins": [
+    "marraigemod.mixins.json",
+    {
+      "config": "marraigemod.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
