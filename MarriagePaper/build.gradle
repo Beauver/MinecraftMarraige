@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 group = 'com.beauver.minecraft.plugins'
@@ -15,10 +16,16 @@ repositories {
         name = "sonatype"
         url = "https://oss.sonatype.org/content/groups/public/"
     }
+
+    maven{
+        url = "https://repo.aikar.co/content/groups/aikar/"
+    }
 }
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
+
+    implementation("co.aikar:acf-paper:0.5.1-SNAPSHOT")
 }
 
 def targetJavaVersion = 21
@@ -46,4 +53,21 @@ processResources {
     filesMatching('plugin.yml') {
         expand props
     }
+}
+
+shadow {
+    tasks.shadowJar.configure {
+        // Set name of result jar
+        archiveBaseName.set("MarriagePlugin")
+        // Include dependencies in result jar
+        archiveClassifier.set("")
+        // Exclude some dependencies from result jar
+        exclude("META-INF/*.SF")
+        exclude("META-INF/*.DSA")
+        exclude("META-INF/*.RSA")
+    }
+}
+
+tasks.build {
+    dependsOn(tasks.shadowJar)
 }

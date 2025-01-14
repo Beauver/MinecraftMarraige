@@ -18,6 +18,13 @@ public class Couple {
     long marriedSince;
 
     //<editor-fold desc="constructors">
+    public Couple(UUID p, UUID p2) {
+        this.p = p;
+        this.p2 = p2;
+        type = RelationshipType.STRAIGHT;
+        marriedSince = System.currentTimeMillis();
+    }
+
     public Couple(Player p, Player p2) {
         this.p = p.getUniqueId();
         this.p2 = p2.getUniqueId();
