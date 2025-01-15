@@ -5,8 +5,11 @@ import co.aikar.commands.annotation.CommandAlias;
 import co.aikar.commands.annotation.CommandCompletion;
 import co.aikar.commands.annotation.Default;
 import co.aikar.commands.annotation.Subcommand;
+import com.beauver.minecraft.plugins.marriagePaper.Classes.AdoptRequest;
 import com.beauver.minecraft.plugins.marriagePaper.Classes.Couple;
 import com.beauver.minecraft.plugins.marriagePaper.Classes.ProposalRequest;
+import com.beauver.minecraft.plugins.marriagePaper.Enums.RelationshipType;
+import com.beauver.minecraft.plugins.marriagePaper.Util.AdoptRequestHandler;
 import com.beauver.minecraft.plugins.marriagePaper.Util.MarriageHandler;
 import com.beauver.minecraft.plugins.marriagePaper.Util.ProposalRequestHandler;
 import net.kyori.adventure.text.Component;
@@ -14,14 +17,12 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
+import org.bukkit.Particle;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.checkerframework.checker.units.qual.C;
-import org.jetbrains.annotations.NotNull;
+
+import java.util.UUID;
 
 @CommandAlias("marry")
 public class MarryCommand extends BaseCommand {
@@ -162,6 +163,50 @@ public class MarryCommand extends BaseCommand {
             sender.sendMessage(Component.text("Only a player can run this command.").color(TextColor.fromHexString("#FF5555")));
             return;
         }
+        if(args.length == 0) {
+            player.sendMessage(Component.text("Please mention a player you want to adopt.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+        if(args[0].equalsIgnoreCase(player.getName())) {
+            player.sendMessage(Component.text("You may not turn yourself into an orphan.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+
+        String targetName = args[0];
+        Player target = Bukkit.getPlayer(targetName);
+
+        //player offline
+        if(target == null) {
+            player.sendMessage(Component.text("You may not adopt someone that is offline.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+        //not married
+        Couple couple = null;
+        for(Couple c : MarriageHandler.getMarriages()){
+            if(c.getPartner1().equals(player.getUniqueId()) || c.getPartner2().equals(player.getUniqueId())){
+                couple = c;
+                break;
+            }
+        }
+        if(couple == null){
+            player.sendMessage(Component.text("You are not married, thus you may not adopt a child").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+
+        AdoptRequest request = new AdoptRequest(player, target);
+        AdoptRequestHandler.addAdoptionRequests(request);
+
+        player.sendMessage(Component.text("Adoption request sent to: ").color(TextColor.fromHexString("#55FF55"))
+                .append(Component.text(target.getName()).color(TextColor.fromHexString("#00AA00"))));
+
+        target.sendMessage(Component.text(player.getName()).color(TextColor.fromHexString("#00AA00"))
+                .append(Component.text(" wants to adopt you!").color(TextColor.fromHexString("#55FF55")))
+                .append(Component.text("\nrun /marry adopt accept " + player.getName() + " to become their child").color(TextColor.fromHexString("#55FF55"))
+                        .clickEvent(ClickEvent.runCommand("/marry adopt accept " + player.getName())))
+                        .hoverEvent(HoverEvent.showText(Component.text("Click this to accept the adoption request").color(TextColor.fromHexString("#55FF55"))))
+                .append(Component.text("\nrun /marry adopt reject " + player.getName() + " to stay an orphan").color(TextColor.fromHexString("#FF5555"))
+                        .clickEvent(ClickEvent.runCommand("/marry adopt reject " + player.getName()))
+                        .hoverEvent(HoverEvent.showText(Component.text("Click this to reject the adoption request").color(TextColor.fromHexString("#FF5555"))))));
     }
 
     @Subcommand("adopt accept")
@@ -171,6 +216,49 @@ public class MarryCommand extends BaseCommand {
             sender.sendMessage(Component.text("Only a player can run this command.").color(TextColor.fromHexString("#FF5555")));
             return;
         }
+        if(args.length == 0) {
+            player.sendMessage(Component.text("Please mention a player you want to join their family of.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+
+        String targetName = args[0];
+        OfflinePlayer targetOffline = Bukkit.getOfflinePlayer(targetName);
+
+        //not married
+        AdoptRequest request = null;
+        for(AdoptRequest a : AdoptRequestHandler.getAdoptionRequests()){
+            if(a.getTarget().equals(player.getUniqueId()) || a.getProposer().equals(targetOffline.getUniqueId())){
+                request = a;
+                break;
+            }
+        }
+        if(request == null){
+            player.sendMessage(Component.text("You do not have a pending adoption request from this player.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+
+        Couple couple = null;
+        for(Couple c : MarriageHandler.getMarriages()){
+            if(c.getPartner1().equals(targetOffline.getUniqueId()) || c.getPartner2().equals(targetOffline.getUniqueId())){
+                couple = c;
+                break;
+            }
+        }
+        if(couple == null){
+            player.sendMessage(Component.text("This player is no longer in a family.").color(TextColor.fromHexString("#FF5555")));
+            AdoptRequestHandler.removeAdoptionRequests(request);
+            return;
+        }
+
+        AdoptRequestHandler.removeAdoptionRequests(request);
+        MarriageHandler.removeMarriage(couple);
+        couple.addChild(player);
+        MarriageHandler.addMarriage(couple);
+
+        player.getServer().broadcast(Component.text(player.getName()).color(TextColor.fromHexString("#00AA00"))
+                .append(Component.text(" is now part of ").color(TextColor.fromHexString("#55FF55")))
+                .append(Component.text(targetOffline.getName() != null ? targetOffline.getName() : "Unknown").color(TextColor.fromHexString("#00AA00")))
+                .append(Component.text("'s family!").color(TextColor.fromHexString("#55FF55"))));
     }
 
     @Subcommand("adopt reject")
@@ -180,6 +268,85 @@ public class MarryCommand extends BaseCommand {
             sender.sendMessage(Component.text("Only a player can run this command.").color(TextColor.fromHexString("#FF5555")));
             return;
         }
+        if(args.length == 0) {
+            player.sendMessage(Component.text("Please mention a player you would like to reject their adoption papers of.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+
+        String targetName = args[0];
+        OfflinePlayer targetOffline = Bukkit.getOfflinePlayer(targetName);
+        Player target = Bukkit.getPlayer(targetName);
+
+        //not married
+        AdoptRequest request = null;
+        for(AdoptRequest a : AdoptRequestHandler.getAdoptionRequests()){
+            if(a.getTarget().equals(player.getUniqueId()) || a.getProposer().equals(targetOffline.getUniqueId())){
+                request = a;
+                break;
+            }
+        }
+        if(request == null){
+            player.sendMessage(Component.text("You do not have a pending adoption request from this player.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+
+        Couple couple = null;
+        for(Couple c : MarriageHandler.getMarriages()){
+            if(c.getPartner1().equals(targetOffline.getUniqueId()) || c.getPartner2().equals(targetOffline.getUniqueId())){
+                couple = c;
+                break;
+            }
+        }
+        if(couple == null){
+            player.sendMessage(Component.text("This player is no longer in a family.").color(TextColor.fromHexString("#FF5555")));
+            AdoptRequestHandler.removeAdoptionRequests(request);
+            return;
+        }
+
+        AdoptRequestHandler.removeAdoptionRequests(request);
+        player.sendMessage(Component.text("You have rejected the adoption request.").color(TextColor.fromHexString("#FF5555")));
+        if(targetOffline.isOnline()){
+            target.sendMessage(Component.text(player.getName()).color(TextColor.fromHexString("#AA0000"))
+                    .append(Component.text(" has rejected your adoption request.").color(TextColor.fromHexString("#FF5555"))));
+        }
+    }
+
+    @Subcommand("adopt leave")
+    public void adoptLeave(CommandSender sender, String[] args){
+        if(!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Only a player can run this command.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+
+        Couple couple = null;
+        for(Couple c : MarriageHandler.getMarriages()){
+            if(c.getChildren().contains(player.getUniqueId())){
+                couple = c;
+                break;
+            }
+        }
+        if(couple == null){
+            player.sendMessage(Component.text("You are a orphan.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+
+        MarriageHandler.removeMarriage(couple);
+        couple.removeChild(player);
+        MarriageHandler.addMarriage(couple);
+
+        String parent1 = Bukkit.getOfflinePlayer(couple.getPartner1()).getName();
+        String parent2 = Bukkit.getOfflinePlayer(couple.getPartner2()).getName();
+
+        Bukkit.getOfflinePlayer(couple.getPartner2());
+        player.getServer().broadcast(
+                Component.text(player.getName())
+                        .color(TextColor.fromHexString("#AA0000"))
+                        .append(Component.text(" has left ").color(TextColor.fromHexString("#FF5555")))
+                        .append(Component.text(parent1)
+                                .color(TextColor.fromHexString("#AA0000")))
+                        .append(Component.text(" and ").color(TextColor.fromHexString("#FF5555")))
+                        .append(Component.text(parent2).color(TextColor.fromHexString("#AA0000")))
+        );
     }
 
     @Subcommand("kiss")
@@ -188,6 +355,41 @@ public class MarryCommand extends BaseCommand {
             sender.sendMessage(Component.text("Only a player can run this command.").color(TextColor.fromHexString("#FF5555")));
             return;
         }
+
+        Couple couple = null;
+        boolean isFirst = true;
+        for(Couple c : MarriageHandler.getMarriages()){
+            if(c.getPartner1().equals(player.getUniqueId())){
+                couple = c;
+                isFirst = false;
+                break;
+            }else if(c.getPartner2().equals(player.getUniqueId())){
+                couple = c;
+                isFirst = true;
+                break;
+            }
+        }
+        if(couple == null){
+            player.sendMessage(Component.text("You can not kiss the air.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+
+        Player target = null;
+        if(isFirst){
+            target = Bukkit.getPlayer(couple.getPartner1());
+        }else{
+            target = Bukkit.getPlayer(couple.getPartner2());
+        }
+        if(target == null){
+            player.sendMessage(Component.text("Your partner is not online. I'm afraid you can't kiss the air.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+
+        target.sendActionBar(Component.text("Your partner grabbed you closely and kissed you on the lips!").color(TextColor.fromHexString("#FFAA00")));
+        player.sendActionBar(Component.text("You kissed your partner!").color(TextColor.fromHexString("#FFAA00")));
+
+        target.spawnParticle(Particle.HEART, target.getLocation(), 10, 0.5,0.5,0.5);
+        player.spawnParticle(Particle.HEART, player.getLocation(), 10, 0.5,1,0.5);
     }
 
     @Subcommand("hug")
@@ -196,6 +398,152 @@ public class MarryCommand extends BaseCommand {
             sender.sendMessage(Component.text("Only a player can run this command.").color(TextColor.fromHexString("#FF5555")));
             return;
         }
+
+        Couple couple = null;
+        boolean isFirst = true;
+        for(Couple c : MarriageHandler.getMarriages()){
+            if(c.getPartner1().equals(player.getUniqueId())){
+                couple = c;
+                isFirst = false;
+                break;
+            }else if(c.getPartner2().equals(player.getUniqueId())){
+                couple = c;
+                isFirst = true;
+                break;
+            }
+        }
+        if(couple == null){
+            player.sendMessage(Component.text("You can not kiss the air.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+
+        Player target = null;
+        if(isFirst){
+            target = Bukkit.getPlayer(couple.getPartner1());
+        }else{
+            target = Bukkit.getPlayer(couple.getPartner2());
+        }
+        if(target == null){
+            player.sendMessage(Component.text("Your partner is not online. I'm afraid you can't hug the air.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+
+        target.sendActionBar(Component.text("Your partner hugged you tightly!").color(TextColor.fromHexString("#FFAA00")));
+        player.sendActionBar(Component.text("You hugged your partner!").color(TextColor.fromHexString("#FFAA00")));
+
+        target.spawnParticle(Particle.HAPPY_VILLAGER, target.getLocation(), 10, 0.5,0.5,0.5);
+        player.spawnParticle(Particle.HAPPY_VILLAGER, player.getLocation(), 10, 0.5,1,0.5);
+    }
+
+    @Subcommand("adopt pat")
+    @CommandCompletion("@players")
+    public void hatpatAdopted(CommandSender sender, String[] args) {
+        if(!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Only a player can run this command.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+        if(args.length == 0) {
+            player.sendMessage(Component.text("Please mention which child which you want to headpat.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+
+        Player target = Bukkit.getPlayer(args[0]);
+        if(target == null){
+            player.sendMessage(Component.text("Player is not online.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+
+        Couple couple = null;
+        for(Couple c : MarriageHandler.getMarriages()){
+            if(c.getPartner1().equals(player.getUniqueId()) || c.getPartner2().equals(player.getUniqueId())){
+                couple = c;
+                break;
+            }
+        }
+        if(couple == null){
+            player.sendMessage(Component.text("You are not married to anyone.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+        if(!couple.getChildren().contains(target.getUniqueId())){
+            player.sendMessage(Component.text("This player is not your child.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+
+        player.sendActionBar(Component.text("You head-patted your child!").color(TextColor.fromHexString("#FFAA00")));
+        target.sendActionBar(Component.text(player.getName() + " has pat your head!").color(TextColor.fromHexString("#FFAA00")));
+
+        player.spawnParticle(Particle.HAPPY_VILLAGER, player.getLocation(), 10, 0.5,0.5,0.5);
+        target.spawnParticle(Particle.HAPPY_VILLAGER, target.getLocation(), 10, 0.5,0.5,0.5);
+    }
+
+    @Subcommand("modify relationship")
+    public void marryChangeRelationshipType(CommandSender sender, String[] args) {
+        if(!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Only a player can run this command.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+        if(args.length == 0) {
+            player.sendMessage(Component.text("Please state if you want your marriage to be: Straight, Gay, Lesbian").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+
+        String relationshipType = args[0];
+        Couple couple = null;
+        for(Couple c : MarriageHandler.getMarriages()){
+            if(c.getPartner1().equals(player.getUniqueId()) || c.getPartner2().equals(player.getUniqueId())){
+                couple = c;
+                break;
+            }
+        }
+        if(couple == null){
+            player.sendMessage(Component.text("You can't change your relationship type if you're not in a married.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+        RelationshipType relationshipEnum;
+
+        try{
+            relationshipEnum = RelationshipType.valueOf(relationshipType.toUpperCase());
+        }catch (IllegalArgumentException e){
+            player.sendMessage(Component.text("Invalid relationship type! [Straight, Gay, Lesbian]").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+
+        MarriageHandler.removeMarriage(couple);
+        couple.setRelationshipType(relationshipEnum);
+        MarriageHandler.addMarriage(couple);
+
+        player.sendMessage(Component.text("Changed your relationship type to: ").color(TextColor.fromHexString("#55FF55"))
+                .append(Component.text(relationshipType).color(TextColor.fromHexString("#00AA00"))));
+
+    }
+
+    @Subcommand("list")
+    public void marryList(CommandSender sender){
+        if(!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Only a player can run this command.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+        Component marryList = Component.text("Married People:\n").color(TextColor.fromHexString("#FFAA00"));
+
+        for(Couple c : MarriageHandler.getMarriages()){
+            marryList = marryList.append(Component.text(Bukkit.getOfflinePlayer(c.getPartner1()).getName()).color(TextColor.fromHexString("#FFAA00")));
+
+            TextColor heartColor;
+            switch (c.getRelationshipType()){
+                case STRAIGHT -> heartColor = TextColor.fromHexString("#FF5555");
+                case GAY -> heartColor = TextColor.fromHexString("#55FFFF");
+                case LESBIAN -> heartColor = TextColor.fromHexString("#FF55FF");
+                default -> heartColor = TextColor.fromHexString("#FF5555");
+            }
+            marryList = marryList.append(Component.text(" ❤ ").color(heartColor));
+            marryList = marryList.append(Component.text(Bukkit.getOfflinePlayer(c.getPartner2()).getName()).color(TextColor.fromHexString("#FFAA00")));
+            marryList = marryList.append(Component.text(" (Days Married: " + c.getDaysMarried() + ")").color(TextColor.fromHexString("#5555FF")));
+            marryList = marryList.append(Component.text("\n- "));
+            for(UUID uuid : c.getChildren()){
+                marryList = marryList.append(Component.text(Bukkit.getOfflinePlayer(uuid).getName() + ",").color(TextColor.fromHexString("#AAAAAA")));
+            }
+        }
+        sender.sendMessage(marryList);
     }
 
 }
