@@ -114,9 +114,14 @@ public class MarryCommand extends BaseCommand {
         MarriageHandler.addMarriage(couple);
         ProposalRequestHandler.removeProposal(request);
 
+        String offlineName = "Unkown";
+        if(targetOffline.getName() != null && !targetOffline.getName().isEmpty()){
+            offlineName = targetOffline.getName();
+        }
+
         player.getServer().broadcast(Component.text(player.getName()).color(TextColor.fromHexString("#00AA00"))
                 .append(Component.text(" and ").color(TextColor.fromHexString("#55FF55")))
-                .append(Component.text(targetOffline.getName()).color(TextColor.fromHexString("#00AA00")))
+                .append(Component.text(offlineName).color(TextColor.fromHexString("#00AA00")))
                 .append(Component.text(" are now officially married!").color(TextColor.fromHexString("#55FF55"))));
     }
 
@@ -149,7 +154,7 @@ public class MarryCommand extends BaseCommand {
         }
         ProposalRequestHandler.removeProposal(request);
 
-        if(targetOffline.isOnline()){
+        if(targetOffline.isOnline() && target != null){
             target.sendMessage(Component.text(player.getName() + " has rejected your proposal.").color(TextColor.fromHexString("#FF5555")));
         }
 
@@ -334,8 +339,16 @@ public class MarryCommand extends BaseCommand {
         couple.removeChild(player);
         MarriageHandler.addMarriage(couple);
 
-        String parent1 = Bukkit.getOfflinePlayer(couple.getPartner1()).getName();
-        String parent2 = Bukkit.getOfflinePlayer(couple.getPartner2()).getName();
+        OfflinePlayer p1 = Bukkit.getOfflinePlayer(couple.getPartner1());
+        OfflinePlayer p2 = Bukkit.getOfflinePlayer(couple.getPartner2());
+        String parent1 = "Unknown";
+        String parent2 = "Unknown";
+        if(p1.getName() != null && !p1.getName().isEmpty()){
+            parent1 = p1.getName();
+        }
+        if(p2.getName() != null && !p2.getName().isEmpty()){
+            parent2 = p2.getName();
+        }
 
         Bukkit.getOfflinePlayer(couple.getPartner2());
         player.getServer().broadcast(
@@ -365,7 +378,6 @@ public class MarryCommand extends BaseCommand {
                 break;
             }else if(c.getPartner2().equals(player.getUniqueId())){
                 couple = c;
-                isFirst = true;
                 break;
             }
         }
@@ -374,7 +386,7 @@ public class MarryCommand extends BaseCommand {
             return;
         }
 
-        Player target = null;
+        Player target;
         if(isFirst){
             target = Bukkit.getPlayer(couple.getPartner1());
         }else{
@@ -408,7 +420,6 @@ public class MarryCommand extends BaseCommand {
                 break;
             }else if(c.getPartner2().equals(player.getUniqueId())){
                 couple = c;
-                isFirst = true;
                 break;
             }
         }
@@ -417,7 +428,7 @@ public class MarryCommand extends BaseCommand {
             return;
         }
 
-        Player target = null;
+        Player target;
         if(isFirst){
             target = Bukkit.getPlayer(couple.getPartner1());
         }else{
@@ -519,14 +530,25 @@ public class MarryCommand extends BaseCommand {
 
     @Subcommand("list")
     public void marryList(CommandSender sender){
-        if(!(sender instanceof Player player)) {
+        if(!(sender instanceof Player)) {
             sender.sendMessage(Component.text("Only a player can run this command.").color(TextColor.fromHexString("#FF5555")));
             return;
         }
         Component marryList = Component.text("Married People:\n").color(TextColor.fromHexString("#FFAA00"));
 
         for(Couple c : MarriageHandler.getMarriages()){
-            marryList = marryList.append(Component.text(Bukkit.getOfflinePlayer(c.getPartner1()).getName()).color(TextColor.fromHexString("#FFAA00")));
+            OfflinePlayer p1 = Bukkit.getOfflinePlayer(c.getPartner1());
+            OfflinePlayer p2 = Bukkit.getOfflinePlayer(c.getPartner2());
+            String p1Name = "Unknown";
+            String p2Name = "Unknown";
+            if (p1.getName() != null && !p1.getName().isEmpty()) {
+                p1Name = p1.getName();
+            }
+            if (p2.getName() != null && !p2.getName().isEmpty()) {
+                p2Name = p2.getName();
+            }
+
+            marryList = marryList.append(Component.text(p1Name).color(TextColor.fromHexString("#FFAA00")));
 
             TextColor heartColor;
             switch (c.getRelationshipType()){
@@ -535,12 +557,37 @@ public class MarryCommand extends BaseCommand {
                 case LESBIAN -> heartColor = TextColor.fromHexString("#FF55FF");
                 default -> heartColor = TextColor.fromHexString("#FF5555");
             }
+
             marryList = marryList.append(Component.text(" ❤ ").color(heartColor));
-            marryList = marryList.append(Component.text(Bukkit.getOfflinePlayer(c.getPartner2()).getName()).color(TextColor.fromHexString("#FFAA00")));
+            marryList = marryList.append(Component.text(p2Name).color(TextColor.fromHexString("#FFAA00")));
             marryList = marryList.append(Component.text(" (Days Married: " + c.getDaysMarried() + ")").color(TextColor.fromHexString("#5555FF")));
-            marryList = marryList.append(Component.text("\n- "));
+
+            if(!c.getChildren().isEmpty()){
+                marryList = marryList.append(Component.text("\n- "));
+            }else{
+                marryList = marryList.append(Component.text("\n"));
+            }
+
+            int counter = 0;
             for(UUID uuid : c.getChildren()){
-                marryList = marryList.append(Component.text(Bukkit.getOfflinePlayer(uuid).getName() + ",").color(TextColor.fromHexString("#AAAAAA")));
+                counter++;
+                if(counter == c.getChildren().size()){
+                    OfflinePlayer child = Bukkit.getOfflinePlayer(uuid);
+                    String childName = "Unknown";
+                    if (child.getName() != null && !child.getName().isEmpty()) {
+                        childName = child.getName();
+                    }
+
+                    marryList = marryList.append(Component.text(childName + "\n").color(TextColor.fromHexString("#AAAAAA")));
+                }else{
+                    OfflinePlayer child = Bukkit.getOfflinePlayer(uuid);
+                    String childName = "Unknown";
+                    if (child.getName() != null && !child.getName().isEmpty()) {
+                        childName = child.getName();
+                    }
+
+                    marryList = marryList.append(Component.text(childName + ", ").color(TextColor.fromHexString("#AAAAAA")));
+                }
             }
         }
         sender.sendMessage(marryList);
