@@ -1,6 +1,6 @@
 name: MarriagePaper
-version: '1.0-SNAPSHOT'
+version: ${version}
 main: com.beauver.minecraft.plugins.marriagePaper.MarriagePaper
-api-version: '1.21'
-authors: [ Beauver ]
+api-version: '1.21.4'
+authors: [ Beauver, Sebiann ]
 description: Mairrage mod thingy
