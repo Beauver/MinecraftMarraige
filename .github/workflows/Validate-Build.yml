@@ -1,10 +1,16 @@
 name: Validate Build
 
 on:
+  # Trigger when a pull request is opened or reopened
   pull_request:
     types:
       - opened
       - reopened
+  # Trigger when a code review is submitted
+  pull_request_review:
+    types:
+      - submitted
+  # Allow manual runs
   workflow_dispatch:
 
 jobs:
