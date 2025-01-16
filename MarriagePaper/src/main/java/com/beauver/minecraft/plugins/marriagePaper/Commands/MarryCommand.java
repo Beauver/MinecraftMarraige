@@ -9,6 +9,7 @@ import com.beauver.minecraft.plugins.marriagePaper.Classes.AdoptRequest;
 import com.beauver.minecraft.plugins.marriagePaper.Classes.Couple;
 import com.beauver.minecraft.plugins.marriagePaper.Classes.ProposalRequest;
 import com.beauver.minecraft.plugins.marriagePaper.Enums.RelationshipType;
+import com.beauver.minecraft.plugins.marriagePaper.MarriagePaper;
 import com.beauver.minecraft.plugins.marriagePaper.Util.AdoptRequestHandler;
 import com.beauver.minecraft.plugins.marriagePaper.Util.MarriageHandler;
 import com.beauver.minecraft.plugins.marriagePaper.Util.ProposalRequestHandler;
@@ -23,6 +24,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.UUID;
+
 
 @CommandAlias("marry")
 public class MarryCommand extends BaseCommand {
@@ -591,6 +593,51 @@ public class MarryCommand extends BaseCommand {
             }
         }
         sender.sendMessage(marryList);
+    }
+    @Subcommand("tp")
+    public void marryTp(CommandSender sender, String[] args) {
+        if(!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Only a player can run this command.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+
+        Couple couple = null;
+        boolean isFirst = true;
+        for(Couple c : MarriageHandler.getMarriages()){
+            if(c.getPartner1().equals(player.getUniqueId())){
+                couple = c;
+                isFirst = false;
+                break;
+            }else if(c.getPartner2().equals(player.getUniqueId())){
+                couple = c;
+                break;
+            }
+        }
+        if(couple == null){
+            player.sendMessage(Component.text("You can not tp to the air.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+
+        Player target;
+        if(isFirst){
+            target = Bukkit.getPlayer(couple.getPartner1());
+        }else{
+            target = Bukkit.getPlayer(couple.getPartner2());
+        }
+        if(target == null){
+            player.sendMessage(Component.text("Your partner is not online. I'm afraid you can't tp to an unknown location.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+
+        int delayInSeconds = 2; // maybe add config? -> Probs later
+
+        target.sendActionBar(Component.text("Your partner will tp to you in '" + delayInSeconds +"' seconds...").color(TextColor.fromHexString("#FFAA00")));
+        player.sendActionBar(Component.text("You will be tped in  '" + delayInSeconds +"' seconds...").color(TextColor.fromHexString("#FFAA00")));
+        Bukkit.getScheduler().runTaskLater(MarriagePaper.plugin, () -> {
+            player.teleport(target.getLocation());
+            player.sendActionBar(Component.text("You have been tped to ur partner!").color(TextColor.fromHexString("#FFAA00")));
+            target.sendActionBar(Component.text("Your partner has tped to you!").color(TextColor.fromHexString("#FFAA00")));
+        }, delayInSeconds * 20L);
     }
 
 }
