@@ -9,6 +9,7 @@ import com.beauver.minecraft.plugins.marriagePaper.Classes.AdoptRequest;
 import com.beauver.minecraft.plugins.marriagePaper.Classes.Couple;
 import com.beauver.minecraft.plugins.marriagePaper.Classes.ProposalRequest;
 import com.beauver.minecraft.plugins.marriagePaper.Enums.RelationshipType;
+import com.beauver.minecraft.plugins.marriagePaper.MarriagePaper;
 import com.beauver.minecraft.plugins.marriagePaper.Util.AdoptRequestHandler;
 import com.beauver.minecraft.plugins.marriagePaper.Util.MarriageHandler;
 import com.beauver.minecraft.plugins.marriagePaper.Util.ProposalRequestHandler;
