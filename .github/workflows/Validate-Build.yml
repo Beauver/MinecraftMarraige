@@ -22,9 +22,6 @@ jobs:
         java-version: '21'
         distribution: 'temurin'
 
-    - name: Check Directory Structure
-      run: ls -R
-
     - name: Build with Gradle
-      working-directory: /MarriagePaper
+      working-directory: MarriagePaper
       run: gradle build
