@@ -628,16 +628,15 @@ public class MarryCommand extends BaseCommand {
             return;
         }
 
-        int delayInSeconds = 2; // maybe add config?
-        long delayInTicks = delayInSeconds * 20L; // Convert seconds to ticks
+        int delayInSeconds = 2; // maybe add config? -> Probs later
 
         target.sendActionBar(Component.text("Your partner will tp to you in '" + delayInSeconds +"' seconds...").color(TextColor.fromHexString("#FFAA00")));
         player.sendActionBar(Component.text("You will be tped in  '" + delayInSeconds +"' seconds...").color(TextColor.fromHexString("#FFAA00")));
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+        Bukkit.getScheduler().runTaskLater(MarraigePaper.plugin, () -> {
             player.teleport(target.getLocation());
             player.sendActionBar(Component.text("You have been tped to ur partner!").color(TextColor.fromHexString("#FFAA00")));
             target.sendActionBar(Component.text("Your partner has tped to you!").color(TextColor.fromHexString("#FFAA00")));
-        }, delayInTicks);
+        }, delayInSeconds * 20L);
     }
 
 }
