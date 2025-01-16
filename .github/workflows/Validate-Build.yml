@@ -5,7 +5,6 @@ on:
     types:
       - opened
       - reopened
-  #Run workflow manually
   workflow_dispatch:
 
 jobs:
@@ -22,6 +21,9 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin'
+
+    - name: Check Directory Structure
+      run: ls -R
 
     - name: Build with Gradle
       working-directory: MinecraftMarraige/MinecraftMarraige/MarriagePaper
