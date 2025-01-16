@@ -26,5 +26,5 @@ jobs:
       run: ls -R
 
     - name: Build with Gradle
-      working-directory: MinecraftMarraige/MinecraftMarraige/MarriagePaper
+      working-directory: /MarriagePaper
       run: gradle build
