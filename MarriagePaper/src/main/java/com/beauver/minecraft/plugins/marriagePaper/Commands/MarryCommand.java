@@ -24,7 +24,6 @@ import org.bukkit.entity.Player;
 
 import java.util.UUID;
 
-import static com.beauver.minecraft.plugins.marriagePaper.MarriagePaper.plugin; // idk how to do it without this
 
 @CommandAlias("marry")
 public class MarryCommand extends BaseCommand {
