@@ -24,4 +24,5 @@ jobs:
         distribution: 'temurin'
 
     - name: Build with Gradle
+      working-directory: MinecraftMarraige/MinecraftMarraige/MarriagePaper
       run: gradle build
