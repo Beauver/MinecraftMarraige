@@ -163,6 +163,31 @@ public class MarryCommand extends BaseCommand {
         player.sendMessage(Component.text("You rejected " + targetOffline.getName() + "'s proposal.").color(TextColor.fromHexString("#FF5555")));
     }
 
+    @Subcommand("divorce")
+    public void marryDivorce(CommandSender sender, String[] args) {
+        if(!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Only a player can run this command.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+
+        Couple couple = null;
+        for(Couple c : MarriageHandler.getMarriages()){
+            if(c.getPartner1().equals(player.getUniqueId()) || c.getPartner2().equals(player.getUniqueId())){
+                couple = c;
+                break;
+            }
+        }
+
+        if(couple == null){
+            player.sendMessage(Component.text("You're already a single pringle!").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+
+        MarriageHandler.removeMarriage(couple);
+        player.getServer().broadcast(Component.text(player.getName()).color(TextColor.fromHexString("#AA0000"))
+                .append(Component.text(" has filed for a divorce and left their children to be orphaned.").color(TextColor.fromHexString("#FF5555"))));
+    }
+
     @Subcommand("adopt")
     @CommandCompletion("@players")
     public void adoptPlayer(CommandSender sender, String[] args) {
