@@ -451,7 +451,7 @@ public class MarryCommand extends BaseCommand {
             }
         }
         if(couple == null){
-            player.sendMessage(Component.text("You can not kiss the air.").color(TextColor.fromHexString("#FF5555")));
+            player.sendMessage(Component.text("You can not hug the air.").color(TextColor.fromHexString("#FF5555")));
             return;
         }
 
