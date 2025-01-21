@@ -514,7 +514,14 @@ public class MarryCommand extends BaseCommand {
         target.spawnParticle(Particle.HAPPY_VILLAGER, target.getLocation(), 10, 0.5,0.5,0.5);
     }
 
+    @Subcommand("modify")
+    @CommandCompletion("@nothing")
+    public void modifyRelationship(CommandSender sender, String[] args) {
+        sender.sendMessage(Component.text("Invalid command.").color(TextColor.fromHexString("#FF5555")));
+    }
+
     @Subcommand("modify relationship")
+    @CommandCompletion("straight|gay|lesbian")
     public void marryChangeRelationshipType(CommandSender sender, String[] args) {
         if(!(sender instanceof Player player)) {
             sender.sendMessage(Component.text("Only a player can run this command.").color(TextColor.fromHexString("#FF5555")));
