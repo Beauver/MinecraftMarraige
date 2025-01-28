@@ -22,7 +22,10 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.Particle;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.checkerframework.checker.units.qual.C;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Random;
 import java.util.UUID;
 
 
@@ -396,29 +399,7 @@ public class MarryCommand extends BaseCommand {
             return;
         }
 
-        Couple couple = null;
-        boolean isFirst = true;
-        for(Couple c : MarriageHandler.getMarriages()){
-            if(c.getPartner1().equals(player.getUniqueId())){
-                couple = c;
-                isFirst = false;
-                break;
-            }else if(c.getPartner2().equals(player.getUniqueId())){
-                couple = c;
-                break;
-            }
-        }
-        if(couple == null){
-            player.sendMessage(Component.text("You can not kiss the air.").color(TextColor.fromHexString("#FF5555")));
-            return;
-        }
-
-        Player target;
-        if(isFirst){
-            target = Bukkit.getPlayer(couple.getPartner1());
-        }else{
-            target = Bukkit.getPlayer(couple.getPartner2());
-        }
+        Player target = getPartner(player);
         if(target == null){
             player.sendMessage(Component.text("Your partner is not online. I'm afraid you can't kiss the air.").color(TextColor.fromHexString("#FF5555")));
             return;
@@ -438,29 +419,7 @@ public class MarryCommand extends BaseCommand {
             return;
         }
 
-        Couple couple = null;
-        boolean isFirst = true;
-        for(Couple c : MarriageHandler.getMarriages()){
-            if(c.getPartner1().equals(player.getUniqueId())){
-                couple = c;
-                isFirst = false;
-                break;
-            }else if(c.getPartner2().equals(player.getUniqueId())){
-                couple = c;
-                break;
-            }
-        }
-        if(couple == null){
-            player.sendMessage(Component.text("You can not hug the air.").color(TextColor.fromHexString("#FF5555")));
-            return;
-        }
-
-        Player target;
-        if(isFirst){
-            target = Bukkit.getPlayer(couple.getPartner1());
-        }else{
-            target = Bukkit.getPlayer(couple.getPartner2());
-        }
+        Player target = getPartner(player);
         if(target == null){
             player.sendMessage(Component.text("Your partner is not online. I'm afraid you can't hug the air.").color(TextColor.fromHexString("#FF5555")));
             return;
@@ -633,29 +592,7 @@ public class MarryCommand extends BaseCommand {
             return;
         }
 
-        Couple couple = null;
-        boolean isFirst = true;
-        for(Couple c : MarriageHandler.getMarriages()){
-            if(c.getPartner1().equals(player.getUniqueId())){
-                couple = c;
-                isFirst = false;
-                break;
-            }else if(c.getPartner2().equals(player.getUniqueId())){
-                couple = c;
-                break;
-            }
-        }
-        if(couple == null){
-            player.sendMessage(Component.text("You can not tp to the air.").color(TextColor.fromHexString("#FF5555")));
-            return;
-        }
-
-        Player target;
-        if(isFirst){
-            target = Bukkit.getPlayer(couple.getPartner1());
-        }else{
-            target = Bukkit.getPlayer(couple.getPartner2());
-        }
+        Player target = getPartner(player);
         if(target == null){
             player.sendMessage(Component.text("Your partner is not online. I'm afraid you can't tp to an unknown location.").color(TextColor.fromHexString("#FF5555")));
             return;
@@ -670,6 +607,59 @@ public class MarryCommand extends BaseCommand {
             player.sendActionBar(Component.text("You have been tped to ur partner!").color(TextColor.fromHexString("#FFAA00")));
             target.sendActionBar(Component.text("Your partner has tped to you!").color(TextColor.fromHexString("#FFAA00")));
         }, delayInSeconds * 20L);
+    }
+
+    @Subcommand("fuck")
+    @CommandCompletion("@nothing")
+    public void marryFuck(CommandSender sender){
+        if(!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Only a player can run this command.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+
+        Player target = getPartner(player);
+        if(target == null){
+            player.sendMessage(Component.text("You might wanna use your hand instead, as you don't have a partner or they are offline.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+
+        target.sendActionBar(Component.text("Your partner is a little too silly, go and get a room! Have fun of course! ;p").color(TextColor.fromHexString("FFAA00")));
+        player.sendActionBar(Component.text("You're a little silly, luckily there's a room nearby, have fun! ;p").color(TextColor.fromHexString("#FFAA00")));
+        target.spawnParticle(Particle.HEART, target.getLocation(), 10, 0.5,0.5,0.5);
+        player.spawnParticle(Particle.HEART, player.getLocation(), 10, 0.5,1,0.5);
+
+        if(new Random().nextInt(250) == 1){
+            player.getServer().broadcast(Component.text(player.getName()).color(TextColor.fromHexString("#AA0000"))
+                    .append(Component.text(" and ").color(TextColor.fromHexString("#FF5555")))
+                    .append(Component.text(target.getName()).color(TextColor.fromHexString("#AA0000")))
+                    .append(Component.text(" have been caught in the act?! Get a room!").color(TextColor.fromHexString("#FF5555"))));
+        }
+    }
+
+    private @Nullable Player getPartner(Player player) {
+        Couple couple = null;
+        boolean isFirst = true;
+        for (Couple c : MarriageHandler.getMarriages()) {
+            if (c.getPartner1().equals(player.getUniqueId())) {
+                couple = c;
+                isFirst = false;
+                break;
+            } else if (c.getPartner2().equals(player.getUniqueId())) {
+                couple = c;
+                break;
+            }
+        }
+        if (couple == null) {
+            return null;
+        }
+
+        Player target;
+        if (isFirst) {
+            target = Bukkit.getPlayer(couple.getPartner1());
+        } else {
+            target = Bukkit.getPlayer(couple.getPartner2());
+        }
+        return target;
     }
 
 }
