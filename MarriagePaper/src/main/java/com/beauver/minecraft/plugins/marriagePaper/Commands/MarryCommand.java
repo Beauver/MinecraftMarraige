@@ -19,10 +19,17 @@ import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Particle;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.units.qual.C;
 import org.jetbrains.annotations.Nullable;
@@ -611,10 +618,50 @@ public class MarryCommand extends BaseCommand {
         }, delayInSeconds * 20L);
     }
 
+
+    @Subcommand("inventory")
+    @CommandCompletion("@nothing")
+    public void marryInventory(CommandSender sender){
+      if(!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Only a player can run this command.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+
+        Player target = getPartner(player);
+        if(target == null){
+            player.sendMessage(Component.text("You do not have a partner or they're not online. I'm afraid you can't see their inventory.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+
+        Inventory copy = Bukkit.createInventory(player, 45, Component.text(target.getName() + "'s Inventory"));
+        copy.setContents(target.getInventory().getContents());
+
+        copy.setItem(36, setCustomName(target.getInventory().getItemInMainHand(), "Main Hand"));
+        copy.setItem(37, setCustomName(target.getInventory().getItemInOffHand(), "Off Hand"));
+        copy.setItem(38, setCustomName(target.getInventory().getHelmet(), "Helmet", false));
+        copy.setItem(39, setCustomName(target.getInventory().getChestplate(), "Chestplate", false));
+        copy.setItem(40, setCustomName(target.getInventory().getLeggings(), "Leggings", false));
+        copy.setItem(41, setCustomName(target.getInventory().getBoots(), "Boots", false));
+        copy.setItem(42, setCustomName(target.getItemOnCursor(), "Cursor Item"));
+        copy.setItem(43, setCustomName(new ItemStack(Material.BARRIER), "Unused"));
+        copy.setItem(44, setCustomName(new ItemStack(Material.BARRIER), "Unused"));
+
+        player.openInventory(copy);
+
+        player.getServer().getPluginManager().registerEvents(new Listener() {
+            @EventHandler
+            public void onInventoryClick(InventoryClickEvent event) {
+                if (event.getInventory().equals(copy)) {
+                    event.setCancelled(true);
+                }
+            }
+        }, MarriagePaper.plugin);
+    }
+
     @Subcommand("gift")
     @CommandCompletion("@nothing")
     public void marryGift(CommandSender sender){
-        if(!(sender instanceof Player player)) {
+      if(!(sender instanceof Player player)) {
             sender.sendMessage(Component.text("Only a player can run this command.").color(TextColor.fromHexString("#FF5555")));
             return;
         }
@@ -623,8 +670,8 @@ public class MarryCommand extends BaseCommand {
         if(target == null){
             player.sendMessage(Component.text("You do not have a partner or their not online. You don't wanna waste your gift now!").color(TextColor.fromHexString("#FF5555")));
             return;
-        }
-
+        }  
+        
         ItemStack item = player.getInventory().getItemInMainHand();
         if(item.isEmpty()){
             player.sendMessage(Component.text("You're not holding anything in your hand. It's a bit sad to gift air isn't it?").color(TextColor.fromHexString("#FF5555")));
@@ -641,8 +688,6 @@ public class MarryCommand extends BaseCommand {
                 .append(Component.text(PlainTextComponentSerializer.plainText().serialize(item.displayName())).color(TextColor.fromHexString("#00AA00"))));
         target.sendMessage(Component.text("Your partner has gifted you: ").color(TextColor.fromHexString("#55FF55"))
                 .append(Component.text(PlainTextComponentSerializer.plainText().serialize(item.displayName())).color(TextColor.fromHexString("#00AA00"))));
-
-
 
         target.getInventory().addItem(item);
         player.getInventory().remove(item);
@@ -673,6 +718,30 @@ public class MarryCommand extends BaseCommand {
                     .append(Component.text(target.getName()).color(TextColor.fromHexString("#AA0000")))
                     .append(Component.text(" have been caught in the act?! Get a room!").color(TextColor.fromHexString("#FF5555"))));
         }
+    }
+
+    private ItemStack setCustomName(ItemStack item, String name) {
+        return setCustomName(item, name, true);
+    }
+
+    private ItemStack setCustomName(ItemStack item, String name, boolean alwaysRename){
+        if(item == null){
+            item = new ItemStack(Material.BARRIER);
+        }else{
+            item = item.clone();
+        }
+
+        ItemMeta meta = item.getItemMeta();
+        if(meta == null){
+            item = new ItemStack(Material.BARRIER);
+            meta = item.getItemMeta();
+        }
+
+        if (alwaysRename || item.getType().equals(Material.BARRIER)) {
+            meta.displayName(Component.text(name));
+            item.setItemMeta(meta);
+        }
+        return item;
     }
 
     private @Nullable Player getPartner(Player player) {
