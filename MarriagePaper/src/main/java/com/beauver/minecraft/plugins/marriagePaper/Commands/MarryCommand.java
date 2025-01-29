@@ -656,8 +656,6 @@ public class MarryCommand extends BaseCommand {
                 }
             }
         }, MarriagePaper.plugin);
-
-      
     }
 
     @Subcommand("gift")
