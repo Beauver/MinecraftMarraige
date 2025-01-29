@@ -17,6 +17,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -29,6 +30,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.units.qual.C;
 import org.jetbrains.annotations.Nullable;
 
@@ -616,10 +618,11 @@ public class MarryCommand extends BaseCommand {
         }, delayInSeconds * 20L);
     }
 
+
     @Subcommand("inventory")
     @CommandCompletion("@nothing")
     public void marryInventory(CommandSender sender){
-        if(!(sender instanceof Player player)) {
+      if(!(sender instanceof Player player)) {
             sender.sendMessage(Component.text("Only a player can run this command.").color(TextColor.fromHexString("#FF5555")));
             return;
         }
@@ -654,6 +657,42 @@ public class MarryCommand extends BaseCommand {
             }
         }, MarriagePaper.plugin);
 
+      
+    }
+
+    @Subcommand("gift")
+    @CommandCompletion("@nothing")
+    public void marryGift(CommandSender sender){
+      if(!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Only a player can run this command.").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+
+        Player target = getPartner(player);
+        if(target == null){
+            player.sendMessage(Component.text("You do not have a partner or their not online. You don't wanna waste your gift now!").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }  
+        
+        ItemStack item = player.getInventory().getItemInMainHand();
+        if(item.isEmpty()){
+            player.sendMessage(Component.text("You're not holding anything in your hand. It's a bit sad to gift air isn't it?").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+
+        if (target.getInventory().firstEmpty() == -1) {
+            player.sendMessage(Component.text("The target's inventory is full. We will not gift your gift!").color(TextColor.fromHexString("#FF5555")));
+            target.sendMessage(Component.text("Your partner tried to gift you something, but your inventory is full!").color(TextColor.fromHexString("#FF5555")));
+            return;
+        }
+
+        player.sendMessage(Component.text("You have gifted your partner: ").color(TextColor.fromHexString("#55FF55"))
+                .append(Component.text(PlainTextComponentSerializer.plainText().serialize(item.displayName())).color(TextColor.fromHexString("#00AA00"))));
+        target.sendMessage(Component.text("Your partner has gifted you: ").color(TextColor.fromHexString("#55FF55"))
+                .append(Component.text(PlainTextComponentSerializer.plainText().serialize(item.displayName())).color(TextColor.fromHexString("#00AA00"))));
+
+        target.getInventory().addItem(item);
+        player.getInventory().remove(item);
     }
 
     @Subcommand("fuck")
@@ -670,7 +709,7 @@ public class MarryCommand extends BaseCommand {
             return;
         }
 
-        target.sendActionBar(Component.text("Your partner is a little too silly, go and get a room! Have fun of course! ;p").color(TextColor.fromHexString("FFAA00")));
+        target.sendActionBar(Component.text("Your partner is a little too silly, go and get a room! Have fun of course! ;p").color(TextColor.fromHexString("#FFAA00")));
         player.sendActionBar(Component.text("You're a little silly, luckily there's a room nearby, have fun! ;p").color(TextColor.fromHexString("#FFAA00")));
         target.spawnParticle(Particle.HEART, target.getLocation(), 10, 0.5,0.5,0.5);
         player.spawnParticle(Particle.HEART, player.getLocation(), 10, 0.5,1,0.5);
